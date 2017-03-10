@@ -7,7 +7,7 @@ dataset <- rbind(test_data, train_data)
 summary(dataset)
 
 
-#use the plot to chekc the dataset
+#-------------use the plot to chekc the dataset---------------------------------------------------
 plot(dataset$`RF1 HWS VALVE 14`, dataset$TEMPERATURE)
 boxplot(dataset$TEMPERATURE~dataset$`RF1 HWS VALVE 14`)
 
@@ -26,9 +26,6 @@ hist(dataset$`GWRV LOOPOUT`)
 plot(dataset$`M1 AVG FLOW`, dataset$TEMPERATURE)
 hist(dataset$`M1 AVG FLOW`)
 
-#med <- median(dataset$`M1 AVG FLOW`,na.rm =TRUE)
-#low <- dataset[dataset$`M1 AVG FLOW` <= med,]
-#high <- dataset[dataset$`M1 AVG FLOW` > med,]
 plot(dataset$`ZONE N121 N125 AVERAGE TEM`, dataset$TEMPERATURE)
 
 plot(dataset$`S1 DPT AVG C`, dataset$TEMPERATURE)
@@ -40,6 +37,8 @@ hist(dataset$`HP3 HEAT STAGE TIMER`)
 plot(dataset$`N1 COOLING OFF`, dataset$TEMPERATURE)
 boxplot(dataset$TEMPERATURE~dataset$`N1 COOLING OFF`)
 
+
+#fit a linear model------------------------------------------------------------------
 fit <- lm(dataset$TEMPERATURE~., data = dataset)
 summary(fit)
 
@@ -47,10 +46,13 @@ library(car)
 outlierTest(fit)
 leveragePlots(fit)
 
+
 dataset$`N1 COOLING OFF` <- as.factor(dataset$`N1 COOLING OFF`)
+#it doesnt matter if we change those 0-1 vairables into factor since there is only 0-1 situation
 fit2 <- lm(dataset$TEMPERATURE~., data = dataset)
 
-
+#the first 6000 instance show a different pattern compared with the other data, so we do 
+#plot ignored the first 6000 data
 new_dataset = dataset[6000:nrow(dataset), ]
 plot(new_dataset$`RF1 HWS VALVE 14`, new_dataset$TEMPERATURE)
 boxplot(new_dataset$TEMPERATURE~new_dataset$`RF1 HWS VALVE 14`)
@@ -78,11 +80,6 @@ outlierTest(fit3)
 leveragePlots(fit3)
 
 plot(fit3)
-
-
-
-
-
 
 par(mfrow=c(2,2))
 dev.off()
