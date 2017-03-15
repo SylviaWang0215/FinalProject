@@ -1,9 +1,7 @@
 #first merge the data - 02202017
 library(readr)
-test_data <- read_csv("~/Documents/Cornell/FinalProject/test_data.csv")
-train_data <- read_csv("~/Documents/Cornell/FinalProject/train_data.csv")
+dataset <- read_csv("~/Documents/Cornell/FinalProject/data.csv")
 
-dataset <- rbind(test_data, train_data)
 summary(dataset)
 
 
@@ -92,7 +90,7 @@ plot(dataset$TEMPERATURE[1500:5000],type="b")
 plot(dataset$TEMPERATURE,type="b")
 
 #-------------------------fit a Svm model--------------------------------------------------------------
-install.packages("e1071")
+#install.packages("e1071")
 library(e1071)
 ahead_time <- c(3,6,12,24,36,48,288)
 tr_tf <- c(3,6,12,24,36,48,288) 
@@ -102,7 +100,7 @@ threshold <- 73
 
 dataset_svm <- na.omit(dataset)
 dataset_svm$TEMPERATURE <- ifelse(dataset_svm$TEMPERATURE >threshold,1,0)
-
+plot(dataset$TEMPERATURE,type="b")
 
 #Q: consider the value of cost and gamma
 
@@ -131,8 +129,8 @@ count = 1
 
 accuracy = 0
 while(count < 100){
-  train_set = dataset_svm[count: (count + 40), ]
-  test_set = dataset_svm[count+ 40 + ahead_time[i], ]
+  train_set <- dataset_svm[count: (count + 40), ]
+  test_set <- dataset_svm[count+ 40 + ahead_time[i], ]
   svm.model <- svm(TEMPERATURE~., data = train_set, cost = 100, gamma = 1)
   svm.pred <- predict(svm.model, test_set[, -11])
   if ((svm.pred < 0 && test_set[, 11] == 0) || (svm.pred >= 0 && test_set[, 11] == 1)){
@@ -142,3 +140,21 @@ while(count < 100){
 }
 
 # Quesiton: how to treat the constant variable?    
+
+
+#03142017--------------------------------------------------------------------------
+library(e1071)
+ahead_time <- c(3,6,12,24,36,48,288)
+tr_tf <- c(3,6,12,24,36,48,288) 
+count = 1
+
+threshold <- 73
+
+dataset_svm <- na.omit(dataset)
+dataset_svm$TEMPERATURE <- ifelse(dataset_svm$TEMPERATURE >threshold,1,0)
+
+#use 3 hour as a train set
+train_x <- dataset_svm[1: 36, 1: 10]
+#ahead of time is 2h -> which is 24 * 5 mins
+train_y <- dataset_svm[60: 95, 11]
+train_set <- cbind(train_x, train_y)
