@@ -89,6 +89,27 @@ plot(dataset$TEMPERATURE[19873:26493],type="b")
 plot(dataset$TEMPERATURE[1500:5000],type="b")
 plot(dataset$TEMPERATURE,type="b")
 
+
+#plot for a day
+plot(dataset$TEMPERATURE[1:288],type="b")
+
+#day1 - 4
+par(mfrow=c(2,2))
+#dev.off()
+plot(dataset$TEMPERATURE[1: 288],type="b")
+plot(dataset$TEMPERATURE[289: 576],type="b")
+plot(dataset$TEMPERATURE[577: 864],type="b")
+plot(dataset$TEMPERATURE[865: 1152],type="b")
+
+
+#day 5 - 8
+par(mfrow=c(2,2))
+#dev.off()
+plot(dataset$TEMPERATURE[288*5 + 1: 288*6],type="b")
+plot(dataset$TEMPERATURE[288*6 + 1: 288*7],type="b")
+plot(dataset$TEMPERATURE[288*7 + 1: 288*8],type="b")
+plot(dataset$TEMPERATURE[288*8 + 1: 288*9],type="b")
+
 #-------------------------fit a Svm model--------------------------------------------------------------
 #install.packages("e1071")
 library(e1071)
@@ -144,17 +165,128 @@ while(count < 100){
 
 #03142017--------------------------------------------------------------------------
 library(e1071)
-ahead_time <- c(3,6,12,24,36,48,288)
-tr_tf <- c(3,6,12,24,36,48,288) 
+
 count = 1
 
 threshold <- 73
 
 dataset_svm <- na.omit(dataset)
-dataset_svm$TEMPERATURE <- ifelse(dataset_svm$TEMPERATURE >threshold,1,0)
+#dataset_svm$TEMPERATURE <- ifelse(dataset_svm$TEMPERATURE >threshold,1,0)
 
-#use 3 hour as a train set
-train_x <- dataset_svm[1: 36, 1: 10]
+#use 1 day as a train set
+train_x <- dataset_svm[1: 288, 1: 10]
+scaled.data <- scale(train_x)
 #ahead of time is 2h -> which is 24 * 5 mins
-train_y <- dataset_svm[60: 95, 11]
+train_y <- dataset_svm[60: 347, 11]
 train_set <- cbind(train_x, train_y)
+
+test_x <- dataset_svm[289:299, 1: 10]
+test_y <- dataset_svm[348: 358, 11]
+test_set <- cbind(test_x, test_y)
+
+svm.model <- svm(TEMPERATURE~., data = train_set, cost = 100, gamma = 1)
+
+svm.pred <- predict(svm.model, test_set[, -11])
+
+
+#use two day as the train dataset-------------------------------------------------------------
+train_x <- dataset_svm[1: 576, 1: 10]
+scaled.data <- scale(train_x)
+#ahead of time is 2h -> which is 24 * 5 mins
+train_y <- dataset_svm[60: 635, 11]
+train_set <- cbind(train_x, train_y)
+
+test_x <- dataset_svm[577: 587, 1: 10]
+test_y <- dataset_svm[636: 646, 11]
+test_set <- cbind(test_x, test_y)
+
+svm.model <- svm(TEMPERATURE~., data = train_set, cost = 100, gamma = 1)
+
+svm.pred <- predict(svm.model, test_set[, -11])
+
+
+#question1: the size of the train set
+#question2: the size of the ahead time
+#question3: the parameter in the model
+#########--------------------------------------------------------------------------------------
+ahead_time <- c(3,6,12,24,36,48,288)
+
+tr_tf <- c(144, 288, 576) 
+
+acc = matrix(NA,nrow=3,ncol = 7)
+
+
+for (j in c(1: 3)){
+  for (i in c(1: 7)){
+    count = 1
+    accuracy = 0
+    
+    while(count < 101){
+      train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
+      train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+      train_set <- cbind(train_x, train_y)
+      
+      test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
+      test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+      #test_set <- cbind(test_x, test_y)
+      
+      svm.model <- svm(TEMPERATURE~., data = train_set, cost = 100, gamma = 1)
+      svm.pred <- predict(svm.model, test_x)
+      accuracy = accuracy + abs(svm.pred-test_y)
+      count = count + 1
+     
+    }
+    acc[j,i] = unlist(accuracy)
+    
+  }
+}
+
+plot(1:7,rep(0,7),ylim=c(0,max(acc)),type="n",xlab = "ahead of time")
+sapply(1:3,function(x)points(1:7,acc[x,],type="b",col=x))
+legend("topright",c("12hr","24hr","48hr"),col=c(1,2,3),bty="n",pch=1,lty = 1)
+
+
+for (i in c(1: 7)){
+  for (j in c(1: 3)){
+    print(c(ahead_time[i], tr_tf[j]))
+  }
+}
+
+
+#-test example------------------------------------------------------
+ahead_time <- c(3,6,12,24,36,48,288)
+
+tr_tf <- seq(from = 288, to = 1440,by = 144) 
+
+acc = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
+
+
+for (j in c(1: 9)){
+  for (i in c(1: 7)){
+    count = 1
+    accuracy = 0
+    
+    while(count < 51){
+      train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
+      train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+      train_set <- cbind(train_x, train_y)
+      
+      test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
+      test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+      #test_set <- cbind(test_x, test_y)
+      
+      svm.model <- svm(TEMPERATURE~., data = train_set, cost = 100, gamma = 1)
+      svm.pred <- predict(svm.model, test_x)
+      accuracy = accuracy + abs(svm.pred-test_y)
+      count = count + 1
+      
+    }
+    acc[j,i] = unlist(accuracy)
+    
+  }
+}
+
+plot(1:7,rep(0,7),ylim=c(0,max(acc)),type="n",xlab = "ahead of time")
+sapply(1:9,function(x)points(1:7,acc[x,],type="b",col=x))
+legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=c(1:9),bty="n",pch=1,lty = 1)
+
