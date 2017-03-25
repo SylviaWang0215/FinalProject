@@ -3,31 +3,31 @@ library(readr)
 dataset <- read_csv("~/Documents/Cornell/FinalProject/data.csv")
 
 summary(dataset)
-
+dataset <- data.frame(dataset)
 
 #-------------use the plot to chekc the dataset---------------------------------------------------
-plot(dataset$`RF1 HWS VALVE 14`, dataset$TEMPERATURE)
-boxplot(dataset$TEMPERATURE~dataset$`RF1 HWS VALVE 14`)
+plot(dataset$`RF1.HWS.VALVE.14`, dataset$TEMPERATURE)
+boxplot(dataset$TEMPERATURE~dataset$`RF1.HWS.VALVE.14`)
 
-plot(dataset$`A1 DX CAP SIGNAL`, dataset$TEMPERATURE)
-hist(dataset$`A1 DX CAP SIGNAL`)
+plot(dataset$`A1.DX.CAP.SIGNAL`, dataset$TEMPERATURE)
+hist(dataset$`A1.DX.CAP.SIGNAL`)
 
-plot(dataset$`RSB P1 START/STOP`, dataset$TEMPERATURE)
-boxplot(dataset$TEMPERATURE~dataset$`RSB P1 START/STOP`)
+plot(dataset$`RSB.P1.START.STOP`, dataset$TEMPERATURE)
+boxplot(dataset$TEMPERATURE~dataset$`RSB.P1.START.STOP`)
 
-plot(dataset$`CRCP VALVE S28A`, dataset$TEMPERATURE)
-hist(dataset$`CRCP VALVE S28A`)
+plot(dataset$`CRCP.VALVE.S28A`, dataset$TEMPERATURE)
+hist(dataset$`CRCP.VALVE.S28A`)
 
-plot(dataset$`GWRV LOOPOUT`, dataset$TEMPERATURE)
-hist(dataset$`GWRV LOOPOUT`)
+plot(dataset$`GWRV.LOOPOUT`, dataset$TEMPERATURE)
+hist(dataset$`GWR. LOOPOUT`)
 
-plot(dataset$`M1 AVG FLOW`, dataset$TEMPERATURE)
-hist(dataset$`M1 AVG FLOW`)
+plot(dataset$`M1.AVG.FLOW`, dataset$TEMPERATURE)
+hist(dataset$`M1.AVG.FLOW`)
 
-plot(dataset$`ZONE N121 N125 AVERAGE TEM`, dataset$TEMPERATURE)
+plot(dataset$`ZONE.N121.N125.AVERAGE.TEM`, dataset$TEMPERATURE)
 
-plot(dataset$`S1 DPT AVG C`, dataset$TEMPERATURE)
-hist(dataset$`S1 DPT AVG C`)
+plot(dataset$`S1.DPT.AVG.C`, dataset$TEMPERATURE)
+hist(dataset$`S1.DPT.AVG.C`)
 
 plot(dataset$`HP3 HEAT STAGE TIMER`, dataset$TEMPERATURE)
 hist(dataset$`HP3 HEAT STAGE TIMER`)
@@ -52,7 +52,7 @@ fit2 <- lm(dataset$TEMPERATURE~., data = dataset)
 #the first 6000 instance show a different pattern compared with the other data, so we do 
 #plot ignored the first 6000 data
 new_dataset = dataset[6000:nrow(dataset), ]
-plot(new_dataset$`RF1 HWS VALVE 14`, new_dataset$TEMPERATURE)
+plot(new_dataset$`RF1.HWS.VALVE.14`, new_dataset$TEMPERATURE)
 boxplot(new_dataset$TEMPERATURE~new_dataset$`RF1 HWS VALVE 14`)
 
 plot(new_dataset$`A1 DX CAP SIGNAL`, new_dataset$TEMPERATURE)
@@ -254,6 +254,14 @@ for (i in c(1: 7)){
 
 
 #-test example------------------------------------------------------
+library(e1071)
+
+count = 1
+
+threshold <- 73
+
+dataset_svm <- na.omit(dataset)
+
 ahead_time <- c(3,6,12,24,36,48,288)
 
 tr_tf <- seq(from = 288, to = 1440,by = 144) 
@@ -275,7 +283,7 @@ for (j in c(1: 9)){
       test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
       #test_set <- cbind(test_x, test_y)
       
-      svm.model <- svm(TEMPERATURE~., data = train_set, cost = 100, gamma = 1)
+      svm.model <- svm(train_y~., data = train_set, cost = 100, gamma = 1)
       svm.pred <- predict(svm.model, test_x)
       accuracy = accuracy + abs(svm.pred-test_y)
       count = count + 1
@@ -290,3 +298,59 @@ plot(1:7,rep(0,7),ylim=c(0,max(acc)),type="n",xlab = "ahead of time")
 sapply(1:9,function(x)points(1:7,acc[x,],type="b",col=x))
 legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=c(1:9),bty="n",pch=1,lty = 1)
 
+#03242017-------------------------------------------------------------------------------------------------------------------
+#neural network
+library('neuralnet')
+dataset_svm <- na.omit(dataset)
+train_x <- dataset_svm[1: 500, 1: 10]
+train_y <- dataset_svm[25: 524, 11]
+train_set <- cbind(train_x, train_y)
+
+test_x <- dataset_svm[501:521, 1: 10]
+test_y <- dataset_svm[525: 545, 11]
+test_set <- cbind(test_x, test_y)
+
+net.sqrt <- neuralnet(as.formula(paste("train_y~",paste(names(train_set)[1:10],collapse = "+"),sep="")),
+                      train_set, hidden = 5, threshold = 0.01)
+net.results <- compute(net.sqrt, test_x)
+
+
+#sliding window for NN---------------------------------------------------------------------
+ahead_time <- c(3,6,12,24,36,48,288)
+
+tr_tf <- seq(from = 288, to = 1440,by = 144) 
+
+acc = matrix(NA, nrow=length(tr_tf), ncol = length(ahead_time))
+
+
+for (j in c(1: 9)){
+  for (i in c(1: 7)){
+    count = 1
+    accuracy = 0
+    while(count < 51){
+      train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
+      train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+      train_set <- cbind(train_x, train_y)
+      
+      test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
+      test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+      #test_set <- cbind(test_x, test_y)
+      
+      net.sqrt <- neuralnet(as.formula(paste("train_y~",paste(names(train_set)[1:10],collapse = "+"),sep="")),
+                            train_set, hidden = 5, threshold = 0.01)
+      net.results <- compute(net.sqrt, test_x)
+      
+      accuracy = accuracy + abs(net.results$net.result - test_y)
+      count = count + 1
+      
+    }
+    acc[j,i] = unlist(accuracy)
+    
+  }
+}
+
+plot(1:7,rep(0,7),ylim=c(0,max(acc)),type="n",xlab = "ahead of time")
+sapply(1:9,function(x)points(1:7,acc[x,],type="b",col=x))
+legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=c(1:9),bty="n",pch=1,lty = 1)
+
+#
