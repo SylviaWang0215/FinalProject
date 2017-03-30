@@ -47,37 +47,6 @@ leveragePlots(fit)
 
 dataset$`N1 COOLING OFF` <- as.factor(dataset$`N1 COOLING OFF`)
 #it doesnt matter if we change those 0-1 vairables into factor since there is only 0-1 situation
-fit2 <- lm(dataset$TEMPERATURE~., data = dataset)
-
-#the first 6000 instance show a different pattern compared with the other data, so we do 
-#plot ignored the first 6000 data
-new_dataset = dataset[6000:nrow(dataset), ]
-plot(new_dataset$`RF1.HWS.VALVE.14`, new_dataset$TEMPERATURE)
-boxplot(new_dataset$TEMPERATURE~new_dataset$`RF1 HWS VALVE 14`)
-
-plot(new_dataset$`A1 DX CAP SIGNAL`, new_dataset$TEMPERATURE)
-hist(new_dataset$`A1 DX CAP SIGNAL`)
-
-plot(dataset$`RSB P1 START/STOP`, dataset$TEMPERATURE)
-boxplot(dataset$TEMPERATURE~dataset$`RSB P1 START/STOP`)
-
-plot(dataset$`CRCP VALVE S28A`, dataset$TEMPERATURE)
-hist(dataset$`CRCP VALVE S28A`)
-
-plot(dataset$`GWRV LOOPOUT`, dataset$TEMPERATURE)
-hist(dataset$`GWRV LOOPOUT`)
-
-plot(dataset$`M1 AVG FLOW`, dataset$TEMPERATURE)
-hist(dataset$`M1 AVG FLOW`)
-
-fit3 <- lm(TEMPERATURE~., data = new_dataset)
-summary(fit3)
-
-library(car)
-outlierTest(fit3)
-leveragePlots(fit3)
-
-plot(fit3)
 
 par(mfrow=c(2,2))
 dev.off()
@@ -110,7 +79,7 @@ plot(dataset$TEMPERATURE[288*6 + 1: 288*7],type="b")
 plot(dataset$TEMPERATURE[288*7 + 1: 288*8],type="b")
 plot(dataset$TEMPERATURE[288*8 + 1: 288*9],type="b")
 
-#-------------------------fit a Svm model--------------------------------------------------------------
+#-------------------------fit a SVM model--------------------------------------------------------------
 #install.packages("e1071")
 library(e1071)
 ahead_time <- c(3,6,12,24,36,48,288)
@@ -353,4 +322,5 @@ plot(1:7,rep(0,7),ylim=c(0,max(acc)),type="n",xlab = "ahead of time")
 sapply(1:9,function(x)points(1:7,acc[x,],type="b",col=x))
 legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=c(1:9),bty="n",pch=1,lty = 1)
 
-#
+#add weight to the error: cold complain -> add more weight to the prediciton value 
+#which is lower than the real temperature
