@@ -29,11 +29,11 @@ plot(dataset$`ZONE.N121.N125.AVERAGE.TEM`, dataset$TEMPERATURE)
 plot(dataset$`S1.DPT.AVG.C`, dataset$TEMPERATURE)
 hist(dataset$`S1.DPT.AVG.C`)
 
-plot(dataset$`HP3 HEAT STAGE TIMER`, dataset$TEMPERATURE)
+plot(dataset$`HP3.HEAT.STAGE.TIMER`, dataset$TEMPERATURE)
 hist(dataset$`HP3 HEAT STAGE TIMER`)
 
-plot(dataset$`N1 COOLING OFF`, dataset$TEMPERATURE)
-boxplot(dataset$TEMPERATURE~dataset$`N1 COOLING OFF`)
+plot(dataset$`N1.COOLING.OFF`, dataset$TEMPERATURE)
+cboxplot(dataset$TEMPERATURE~dataset$`N1 COOLING OFF`)
 
 
 #fit a linear model------------------------------------------------------------------
@@ -233,34 +233,43 @@ dataset_svm <- na.omit(dataset)
 
 ahead_time <- c(3,6,12,24,36,48,288)
 
+#ahead_time <- c(3, 6, 1)
+
+cost_set <- c(0.001, 0.01, 0.1, 1, 10)
+
+#gamma <- c(0.001, 0.01, 0.1, 1)
+
 tr_tf <- seq(from = 288, to = 1440,by = 144) 
 
 acc = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
 
+result <- list()
 
-for (j in c(1: 9)){
+for(k in c(1: 5)){
   for (i in c(1: 7)){
-    count = 1
-    accuracy = 0
-    
-    while(count < 51){
-      train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
-      train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
-      train_set <- cbind(train_x, train_y)
+    for (j in c(1: 9)){
+      count = 1
+      accuracy = 0
       
-      test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
-      test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
-      #test_set <- cbind(test_x, test_y)
+      while(count < 10000){
+        train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
+        train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+        train_set <- cbind(train_x, train_y)
       
-      svm.model <- svm(train_y~., data = train_set, cost = 100, gamma = 1)
-      svm.pred <- predict(svm.model, test_x)
-      accuracy = accuracy + abs(svm.pred-test_y)
-      count = count + 1
+        test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
+        test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+        #test_set <- cbind(test_x, test_y)
       
+        svm.model <- svm(train_y~., data = train_set, cost = cost_set[k])
+        svm.pred <- predict(svm.model, test_x)
+        accuracy = accuracy + abs(svm.pred-test_y)
+        count = count + 1
+      
+      }
+      acc[j,i] = unlist(accuracy)
     }
-    acc[j,i] = unlist(accuracy)
-    
   }
+  result[[k]] = acc
 }
 
 plot(1:7,rep(0,7),ylim=c(0,max(acc)),type="n",xlab = "ahead of time")
@@ -285,6 +294,7 @@ net.results <- compute(net.sqrt, test_x)
 
 
 #sliding window for NN---------------------------------------------------------------------
+
 ahead_time <- c(3,6,12,24,36,48,288)
 
 tr_tf <- seq(from = 288, to = 1440,by = 144) 
