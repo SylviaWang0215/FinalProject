@@ -60,7 +60,7 @@ plot(dataset$TEMPERATURE,type="b")
 
 
 #plot for a day
-plot(dataset$TEMPERATURE[1:288],type="b")
+plot(dataset$TEMPERATURE[1:288],type="b", xlab = "time", ylab = "temperature")
 
 #day1 - 4
 par(mfrow=c(2,2))
@@ -231,7 +231,7 @@ threshold <- 73
 
 dataset_svm <- na.omit(dataset)
 
-ahead_time <- c(3,6,12,24,36,48,288)
+ahead_time <- c(3,6,12,24,48,96,192,384)
 
 #ahead_time <- c(3, 6, 1)
 
@@ -246,7 +246,7 @@ acc = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
 result <- list()
 
 for(k in c(1: 5)){
-  for (i in c(1: 7)){
+  for (i in c(1: 8)){
     for (j in c(1: 9)){
       count = 1
       accuracy = 0
@@ -306,13 +306,13 @@ for (j in c(1: 9)){
   for (i in c(1: 7)){
     count = 1
     accuracy = 0
-    while(count < 51){
-      train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
-      train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+    while(count < 20000){
+      train_x <- dataset[count: (count + tr_tf[j]), 1: 10]
+      train_y <- dataset[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
       train_set <- cbind(train_x, train_y)
       
-      test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
-      test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+      test_x <- dataset[(count + tr_tf[j] + 1), 1: 10]
+      test_y <- dataset[(count + tr_tf[j] + ahead_time[i] + 1), 11]
       #test_set <- cbind(test_x, test_y)
       
       net.sqrt <- neuralnet(as.formula(paste("train_y~",paste(names(train_set)[1:10],collapse = "+"),sep="")),
@@ -320,7 +320,7 @@ for (j in c(1: 9)){
       net.results <- compute(net.sqrt, test_x)
       
       accuracy = accuracy + abs(net.results$net.result - test_y)
-      count = count + 1
+      count = count + 5
       
     }
     acc[j,i] = unlist(accuracy)
@@ -334,3 +334,182 @@ legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","12
 
 #add weight to the error: cold complain -> add more weight to the prediciton value 
 #which is lower than the real temperature
+
+
+#2017-04-16 test the random forest algorithm to the dataset
+
+#figure for the paper
+#plot for a day
+plot(dataset$TEMPERATURE[1:288],type="b", xlab = "time", ylab = "temperature")
+
+
+#linear regression-------------------------------------------------------------------------------------------------
+ahead_time <- c(3,6,12,24,48,96, 192, 384)
+
+tr_tf <- seq(from = 288, to = 1440,by = 144) 
+
+acc = matrix(NA, nrow=length(tr_tf), ncol = length(ahead_time))
+
+j = 3
+i = 1
+
+for (j in c(1: 9)){
+  for (i in c(1: 8)){
+    count = 1
+    accuracy = 0
+    while(count < 20000){
+      train_x <- dataset[count: (count + tr_tf[j]), 1: 10]
+      train_y <- dataset[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+      train_set <- cbind(train_x, train_y)
+      
+      test_x <- dataset[(count + tr_tf[j] + 1), 1: 10]
+      test_y <- dataset[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+      #test_set <- cbind(test_x, test_y)
+      
+      fx <- lm(train_y~., data = train_set)
+      
+      accuracy = accuracy + abs(predict(fx, test_x) - test_y)
+      count = count + 5
+      
+    }
+    acc[j,i] = unlist(accuracy)
+  }
+}
+
+plot(1:8,rep(0,8),ylim=c(0,max(acc)),type="n",xlab = "ahead of time", ylab = "absolute loss")
+sapply(1:9,function(x)points(1:8,acc[x,],type="b",col=x))
+legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=c(1:9),bty="n",pch=1,lty = 1)
+
+#ridge regression----------------------------------------------------------------------------------
+#use the result from the linear regression to find the best coefficient for regularization
+
+library("glmnet")
+
+ahead_time <- c(3, 6, 12, 24, 48, 96, 192, 384)
+
+tr_tf <- seq(from = 288, to = 1440,by = 144) 
+
+acc = matrix(NA, nrow=length(tr_tf), ncol = length(ahead_time))
+
+reg_coef <- c(0.001, 0.01, 0.1, 1, 10, 100)
+
+dataset_matrix <- as.matrix(dataset)
+
+count = 1
+accuracy = 0
+i = 1
+j = 3
+
+#for (j in c(1: 9)){
+#  for (i in c(1: 8)){
+count = 1
+accuracy = 0
+while(count < 20000){
+  train_x <- dataset_matrix[count: (count + tr_tf[j]), 1: 10]
+  train_y <- dataset_matrix[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+  train_set <- cbind(train_x, train_y)
+      
+  test_x <- dataset_matrix[(count + tr_tf[j] + 1), 1: 10]
+  test_y <- dataset_matrix[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+      
+  train_set <- cbind(train_y, train_x)    
+  cvfx <- cv.glmnet(train_x, train_y)
+  plot(cvfx)
+      
+  accuracy = accuracy + abs(predict(cvfx, newx = t(test_x), s = "lambda.1se") - test_y)
+  count = count + 5
+}
+#  }
+#}
+#acc[j,i] = unlist(accuracy)
+
+
+plot(1:8,rep(0,8),ylim=c(0,max(acc)),type="n",xlab = "ahead of time")
+sapply(1:9,function(x)points(1:7,acc[x,],type="b",col=x))
+legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=c(1:9),bty="n",pch=1,lty = 1)
+
+
+
+#update the new set for training dataset and ahead of time
+
+count = 1
+
+threshold <- 73
+
+dataset_svm <- na.omit(dataset)
+
+ahead_time <- c(3, 4, 5, 6)
+
+#cost_set <- c(0.001, 0.01, 0.1, 1, 10)
+
+tr_tf <- c(264, 276, 288, 300, 312)
+
+acc = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
+
+result <- list()
+
+
+for (i in c(1: 4)){
+  for (j in c(1: 5)){
+    count = 1
+    accuracy = 0
+      
+    while(count < 20000){
+      train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
+      train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+      train_set <- cbind(train_x, train_y)
+        
+      test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
+      test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+      #test_set <- cbind(test_x, test_y)
+        
+      svm.model <- svm(train_y~., data = train_set)
+      svm.pred <- predict(svm.model, test_x)
+      accuracy = accuracy + abs(svm.pred-test_y)
+      count = count + 5
+        
+    }
+    acc[j,i] = unlist(accuracy)
+  }
+}
+
+plot(1:5,rep(0,5),ylim=c(0,max(acc)),type="n",xlab = "ahead of time")
+sapply(1:4,function(x)points(1:4,acc[x,],type="b",col=x))
+legend("topright",c("22hr","23hr","24hr","25hr","26hr"),col=c(1:4),bty="n",pch=1,lty = 1)
+
+
+# find the value for C and Gamma---------------------------------------------------------------------------------
+
+C <- c(0.001, 0.01, 0.1, 1, 10, 100)
+gamma <- c(0.001, 0.01, 0.1, 1, 10, 100)
+
+acc = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
+
+result <- list()
+
+j = 4
+i = 1
+
+for (C_index in c(1: 6)){
+  for (gamma_index in c(1: 6)){
+    count = 1
+    accuracy = 0
+    
+    while(count < 20000){
+      train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
+      train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+      train_set <- cbind(train_x, train_y)
+      
+      test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
+      test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+      #test_set <- cbind(test_x, test_y)
+      
+      svm.model <- svm(train_y~., data = train_set, cost = C[C_index], gamma = gamma[gamma_index], scale = FALSE)
+      svm.pred <- predict(svm.model, test_x)
+      accuracy = accuracy + abs(svm.pred-test_y)
+      count = count + 5
+      
+    }
+    acc[j,i] = unlist(accuracy)
+  }
+}
