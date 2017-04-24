@@ -344,14 +344,16 @@ plot(dataset$TEMPERATURE[1:288],type="b", xlab = "time", ylab = "temperature")
 
 
 #linear regression-------------------------------------------------------------------------------------------------
-ahead_time <- c(3,6,12,24,48,96, 192, 384)
+ahead_time <- c(3,6,12,24,48,96, 192, 288)
 
 tr_tf <- seq(from = 288, to = 1440,by = 144) 
 
 acc = matrix(NA, nrow=length(tr_tf), ncol = length(ahead_time))
 
-j = 3
+j = 1
 i = 1
+
+count = 5000
 
 for (j in c(1: 9)){
   for (i in c(1: 8)){
@@ -400,27 +402,40 @@ accuracy = 0
 i = 1
 j = 3
 
-#for (j in c(1: 9)){
-#  for (i in c(1: 8)){
+train <- 288
+ahead <- 3
+
+error1 = 0
+error2 = 0
+
 count = 1
 accuracy = 0
 while(count < 20000){
-  train_x <- dataset_matrix[count: (count + tr_tf[j]), 1: 10]
-  train_y <- dataset_matrix[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+  train_x <- dataset_matrix[count: (count + train), 1: 10]
+  train_y <- dataset_matrix[(count + ahead): (count + train + ahead), 11]
   train_set <- cbind(train_x, train_y)
       
-  test_x <- dataset_matrix[(count + tr_tf[j] + 1), 1: 10]
-  test_y <- dataset_matrix[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+  test_x <- dataset_matrix[(count + train + 1), 1: 10]
+  test_y <- dataset_matrix[(count + train + ahead + 1), 11]
       
   train_set <- cbind(train_y, train_x)    
   cvfx <- cv.glmnet(train_x, train_y)
-  plot(cvfx)
-      
-  accuracy = accuracy + abs(predict(cvfx, newx = t(test_x), s = "lambda.1se") - test_y)
-  count = count + 5
+      #plot(cvfx)
+  pred <- predict(cvfx, newx = t(test_x), s = "lambda.min") 
+  if ((pred > cutoff & test_y > cutoff)|| (pred < cutoff & test_y <= cutoff)){
+    accuracy = accuracy
+  }
+  else{
+    accuracy = accuracy + 1
+    if (svm.pred > cutoff & test_y < cutoff){
+      error1 = error1 + 1
+    }
+    else{
+      error2 = error2 + 1
+    }
+  }  
+count = count + 5
 }
-#  }
-#}
 #acc[j,i] = unlist(accuracy)
 
 
@@ -480,17 +495,17 @@ legend("topright",c("22hr","23hr","24hr","25hr","26hr"),col=c(1:4),bty="n",pch=1
 
 # find the value for C and Gamma---------------------------------------------------------------------------------
 
-C <- c(0.001, 0.01, 0.1, 1, 10, 100)
+c <- c(0.001, 0.01, 0.1, 1, 10, 100)
 gamma <- c(0.001, 0.01, 0.1, 1, 10, 100)
 
-acc = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
+acc = matrix(NA,nrow=length(c),ncol = length(gamma))
 
 result <- list()
 
-j = 4
+j = 1
 i = 1
 
-for (C_index in c(1: 6)){
+for (c_index in c(1: 6)){
   for (gamma_index in c(1: 6)){
     count = 1
     accuracy = 0
@@ -504,12 +519,175 @@ for (C_index in c(1: 6)){
       test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
       #test_set <- cbind(test_x, test_y)
       
-      svm.model <- svm(train_y~., data = train_set, cost = C[C_index], gamma = gamma[gamma_index], scale = FALSE)
+      svm.model <- svm(train_y~., data = train_set, cost = c[c_index], gamma = gamma[gamma_index], scale = FALSE)
       svm.pred <- predict(svm.model, test_x)
       accuracy = accuracy + abs(svm.pred-test_y)
       count = count + 5
       
     }
-    acc[j,i] = unlist(accuracy)
+    acc[c_index,gamma_index] = unlist(accuracy)
   }
 }
+
+#when the cost = 100, gamma = 1e-03, the loss function is the minimize
+
+#narrow the search range for cost and gamma------------------------------------------------------------------
+c <- seq(from = 50, to = 150,by = 10)
+gamma <- seq(from = 0.0005, to = 0.0015, by = 0.0001)
+ahead_time <- c(3, 4, 5, 6)
+tr_tf <- c(264, 276, 288, 300, 312)
+cutoff = 69.1
+
+acc = matrix(NA,nrow=length(c),ncol = length(gamma))
+
+j = 4
+i = 1
+
+
+for (c_index in c(1: 11)){
+  for (gamma_index in c(1: 11)){
+    count = 1
+    accuracy = 0
+    
+    while(count < 20000){
+      train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
+      train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+      train_set <- cbind(train_x, train_y)
+      
+      test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
+      test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+      #test_set <- cbind(test_x, test_y)
+      
+      svm.model <- svm(train_y~., data = train_set, cost = c[c_index], gamma = gamma[gamma_index], scale = FALSE)
+      svm.pred <- predict(svm.model, test_x)
+      if ((svm.pred > cutoff & test_y > cutoff)|| (svm.pred < cutoff & test_y <= cutoff)){
+        accuracy = accuracy
+      }
+      else{
+        accuracy = accuracy + 1
+      }
+      #accuracy = accuracy + abs(svm.pred-test_y)
+      count = count + 5
+      
+    }
+    acc[c_index,gamma_index] = unlist(accuracy)
+  }
+}
+
+#test the shreshold
+#use 69.1 as the cutoff
+count = 1
+accuracy = 0
+ahead_time <- c(3, 4, 5, 6)
+tr_tf <- c(264, 276, 288, 300, 312)
+j = 4
+i = 1
+cutoff = 69.1
+
+while(count < 20000){
+  train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
+  train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+  train_set <- cbind(train_x, train_y)
+  
+  test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
+  test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+  #test_set <- cbind(test_x, test_y)
+  
+  svm.model <- svm(train_y~., data = train_set, cost = 100, gamma = 0.001, scale = FALSE)
+  svm.pred <- predict(svm.model, test_x)
+  if ((svm.pred > cutoff & test_y > cutoff)|| (svm.pred < cutoff & test_y <= cutoff)){
+    accuracy = accuracy
+  }
+  else{
+    accuracy = accuracy + 1
+  }
+  #accuracy = accuracy + abs(svm.pred-test_y)
+  count = count + 5
+  
+}
+
+
+
+while(count < 20000){
+  train_x <- dataset_svm[count: (count + 500), 1: 10]
+  train_y <- dataset_svm[(count + 3): (count + 500 + 3), 11]
+  train_set <- cbind(train_x, train_y)
+  
+  test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
+  test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+  #test_set <- cbind(test_x, test_y)
+  
+  svm.model <- svm(train_y~., data = train_set, cost = 100, gamma = 0.01, scale = FALSE)
+  svm.pred <- predict(svm.model, test_x)
+  if ((svm.pred > cutoff & test_y > cutoff)|| (svm.pred < cutoff & test_y <= cutoff)){
+    accuracy = accuracy
+  }
+  else{
+    accuracy = accuracy + 1
+  }
+  #accuracy = accuracy + abs(svm.pred-test_y)
+  count = count + 5
+  
+}
+
+#2017-04-21 use the 0-1 loss function to run the whole code----------------------------------------------------
+library(e1071)
+
+dataset_matrix <- as.matrix(dataset)
+
+cutoff <- 69.1
+
+dataset_svm <- na.omit(dataset)
+ahead_time <- c(3,6,12,24,48,96,192,288)
+tr_tf <- seq(from = 288, to = 1440,by = 144) 
+acc = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
+err1 = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
+err2 = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
+
+
+  for (i in c(1: 8)){
+    for (j in c(1: 9)){
+      count = 1
+      accuracy = 0
+      error1 = 0
+      error2 = 0
+      
+      while(count < 20000){
+        train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
+        train_y <- dataset_svm[(count + ahead_time[i]): (count + tr_tf[j] + ahead_time[i]), 11]
+        train_set <- cbind(train_x, train_y)
+        
+        test_x <- dataset_svm[(count + tr_tf[j] + 1), 1: 10]
+        test_y <- dataset_svm[(count + tr_tf[j] + ahead_time[i] + 1), 11]
+        
+        svm.model <- svm(train_y~., data = train_set)
+        svm.pred <- predict(svm.model, test_x)
+        if ((svm.pred > cutoff & test_y > cutoff)|| (svm.pred < cutoff & test_y <= cutoff)){
+          accuracy = accuracy
+        }
+        else{
+          accuracy = accuracy + 1
+          if (svm.pred > cutoff & test_y < cutoff){
+            error1 = error1 + 1
+          }
+          else{
+            error2 = error2 + 1
+          }
+        }
+        count = count + 5
+        
+      }
+      acc[j,i] = unlist(accuracy)
+      err1[j, i] = unlist(error1)
+      err2[j, i] = unlist(error2)
+    }
+  }
+
+colors <- c("#A7A7A7","dodgerblue","firebrick","forestgreen","gold","black","brown",6,4)
+plot(1:8,rep(0,8),ylim=c(min(acc)*0.9, max(acc)*1.1),type="n",xlab = "ahead of time", main =     "Overall Error")
+sapply(1:9,function(x)points(1:8,acc[x,],type="b",col=colors[x]))
+legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=colors,bty="n",pch=1,lty = 1)
+
+plot(1:8,rep(0,8),ylim=c(min(err1)*0.9, max(err1)*1.1),type="n",xlab = "ahead of time", main="")
+sapply(1:9,function(x)points(1:8,err1[x,],type="b",col=colors[x]))
+legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=colors,bty="n",pch=1,lty = 1)
