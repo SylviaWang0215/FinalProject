@@ -635,7 +635,7 @@ library(e1071)
 
 dataset_matrix <- as.matrix(dataset)
 
-cutoff <- 69.1
+cutoff <- 68.1
 
 dataset_svm <- na.omit(dataset)
 ahead_time <- c(3,6,12,24,48,96,192,288)
@@ -643,6 +643,7 @@ tr_tf <- seq(from = 288, to = 1440,by = 144)
 acc = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
 err1 = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
 err2 = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
+square_error = matrix(NA, nrow = length(tr_tf), ncol = length(ahead_time))
 
 
   for (i in c(1: 8)){
@@ -651,6 +652,7 @@ err2 = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
       accuracy = 0
       error1 = 0
       error2 = 0
+      square = 0
       
       while(count < 20000){
         train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
@@ -674,12 +676,14 @@ err2 = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
             error2 = error2 + 1
           }
         }
+        square = square + (svm.pred - test_y)*(svm.pred - test_y)
         count = count + 5
         
       }
       acc[j,i] = unlist(accuracy)
       err1[j, i] = unlist(error1)
       err2[j, i] = unlist(error2)
+      square_error[j, i] = unlist(square)
     }
   }
 
@@ -698,12 +702,13 @@ library(e1071)
 
 dataset_matrix <- as.matrix(dataset)
 
-cutoff <- 69.1
+cutoff <- 68.1
 
 dataset_svm <- na.omit(dataset)
 tr_tf <- c(264, 276, 288, 300, 312, 408, 420, 432, 444, 456)
 ahead_time <- c(3, 4, 5, 6, 7, 8, 9)
 acc = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
+square_error = matrix(NA, nrow = length(tr_tf), ncol = length(ahead_time))
 err1 = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
 err2 = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
 
@@ -711,9 +716,10 @@ err2 = matrix(NA,nrow=length(tr_tf),ncol = length(ahead_time))
 for (i in c(1: 7)){
   for (j in c(1: 10)){
     count = 1
-    accuracy = 0
+    overall_error = 0
     error1 = 0
     error2 = 0
+    square = 0
     
     while(count < 20000){
       train_x <- dataset_svm[count: (count + tr_tf[j]), 1: 10]
@@ -726,10 +732,10 @@ for (i in c(1: 7)){
       svm.model <- svm(train_y~., data = train_set)
       svm.pred <- predict(svm.model, test_x)
       if ((svm.pred > cutoff & test_y > cutoff)|| (svm.pred < cutoff & test_y <= cutoff)){
-        accuracy = accuracy
+        overall_error = overall_error
       }
       else{
-        accuracy = accuracy + 1
+        overall_error = overall_error + 1
         if (svm.pred > cutoff & test_y < cutoff){
           error1 = error1 + 1
         }
@@ -737,12 +743,14 @@ for (i in c(1: 7)){
           error2 = error2 + 1
         }
       }
+      square = square + (svm.pred - test_y)*(svm.pred - test_y)
       count = count + 5
       
     }
     acc[j,i] = unlist(accuracy)
     err1[j, i] = unlist(error1)
     err2[j, i] = unlist(error2)
+    square_error[j, i] = unlist(square)
   }
 }
 
@@ -758,7 +766,7 @@ legend("topright",c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37
 
 
 
-#calculate the C and gamma for ahead of time = 15min and training dataset size = 23hr----------
+#calculate the C and gamma for ahead of time = 15min and training dataset size = 23hr-------------------
 cost = c(0.001, 0.01, 0.1, 1, 10, 100)
 gamma = c(0.001, 0.01, 0.1, 1, 10, 100)
 
@@ -804,4 +812,15 @@ for (i in c(1: 6)){
     err2[j, i] = unlist(error2)
   }
 }
+
+colors <- c("dodgerblue","firebrick","forestgreen","gold","black","brown")
+plot(1:6,rep(0,6),ylim=c(min(svm_result2)*0.9, max(svm_result2)*1.1),type="n",xlab = "ahead of time", main = "Overall Error")
+sapply(1:6,function(x)points(1:6,svm_result2[x,],type="b",col=colors[x]))
+legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
+
+plot(1:6,rep(0,7),ylim=c(min(svm_error1_1)*0.9, max(svm_error1_1)*1.1),type="n",xlab = "ahead of time", main="Predicted > CutOff & Observed < Cutoff")
+sapply(1:6,function(x)points(1:6,svm_error1_1[x,],type="b",col=colors[x]))
+legend("topright",c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),col=colors,bty="n",pch=1,lty = 1)
+
+#change the partition method for the data----------------------------------------------------------
 
