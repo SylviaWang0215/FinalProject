@@ -125,7 +125,7 @@ for (i in c(1: 7)){
       count = count + 5
       
     }
-    acc[j,i] = unlist(accuracy)
+    acc[j,i] = unlist(overall_error)
     err1[j, i] = unlist(error1)
     err2[j, i] = unlist(error2)
     square_error[j, i] = unlist(square)
@@ -133,16 +133,20 @@ for (i in c(1: 7)){
 }
 
 colors <- c("#A7A7A7","dodgerblue","firebrick","forestgreen","gold","black","brown", 6, 4, 3)
-plot(1:7,rep(0,7),ylim=c(min(svm_result2)*0.9, max(svm_result2)*1.1),type="n",xlab = "ahead of time", main = "Overall Error")
-sapply(1:10,function(x)points(1:7,svm_result2[x,],type="b",col=colors[x]))
+plot(1:7,rep(0,7),ylim=c(min(acc2)*0.9, max(acc2)*1.1),type="n",xlab = "ahead of time", main = "Overall 0-1 Error")
+sapply(1:10,function(x)points(1:7,acc2[x,],type="b",col=colors[x]))
 legend("topright",c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),col=colors,bty="n",pch=1,lty = 1)
 
-plot(1:7,rep(0,7),ylim=c(min(svm_error1_1)*0.9, max(svm_error1_1)*1.1),type="n",xlab = "ahead of time", main="Predicted > CutOff & Observed < Cutoff")
-sapply(1:10,function(x)points(1:7,svm_error1_1[x,],type="b",col=colors[x]))
+plot(1:7,rep(0,7),ylim=c(min(err1_2)*0.9, max(err1_2)*1.1),type="n",xlab = "ahead of time", main="Predicted > CutOff & Observed < Cutoff 0-1 Error")
+sapply(1:10,function(x)points(1:7,err1_2[x,],type="b",col=colors[x]))
+legend("topright",c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),col=colors,bty="n",pch=1,lty = 1)
+
+plot(1:7,rep(0,7),ylim=c(min(square_error2)*0.9, max(square_error2)*1.1),type="n",xlab = "ahead of time", main="Square error")
+sapply(1:10,function(x)points(1:7,square_error2[x,],type="b",col=colors[x]))
 legend("topright",c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),col=colors,bty="n",pch=1,lty = 1)
 
 
-
+#save all the results in acc2, err1_2, err2_2, square_error2
 
 #calculate the C and gamma for ahead of time = 15min and training dataset size = 23hr-------------------
 cost = c(0.001, 0.01, 0.1, 1, 10, 100)
@@ -151,6 +155,8 @@ gamma = c(0.001, 0.01, 0.1, 1, 10, 100)
 acc = matrix(NA,nrow=length(cost),ncol = length(gamma))
 err1 = matrix(NA,nrow=length(cost),ncol = length(gamma))
 err2 = matrix(NA,nrow=length(cost),ncol = length(gamma))
+
+
 
 
 for (i in c(1: 6)){
