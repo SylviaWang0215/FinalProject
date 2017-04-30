@@ -148,16 +148,17 @@ legend("topright",c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37
 
 #save all the results in acc2, err1_2, err2_2, square_error2
 
-#calculate the C and gamma for ahead of time = 15min and training dataset size = 23hr-------------------
+#calculate the C and gamma for ahead of time = 15min and training dataset size = 26hr-------------------
 cost = c(0.001, 0.01, 0.1, 1, 10, 100)
 gamma = c(0.001, 0.01, 0.1, 1, 10, 100)
 
 acc = matrix(NA,nrow=length(cost),ncol = length(gamma))
 err1 = matrix(NA,nrow=length(cost),ncol = length(gamma))
 err2 = matrix(NA,nrow=length(cost),ncol = length(gamma))
+square_error = matrix(NA,nrow=length(cost),ncol = length(gamma))
 
-
-
+tr = 312
+ahead = 3
 
 for (i in c(1: 6)){
   for (j in c(1: 6)){
@@ -165,14 +166,15 @@ for (i in c(1: 6)){
     accuracy = 0
     error1 = 0
     error2 = 0
+    square = 0
     
     while(count < 20000){
-      train_x <- dataset_svm[count: (count + 276), 1: 10]
-      train_y <- dataset_svm[(count + 3): (count + 276 + 3), 11]
+      train_x <- dataset_svm[count: (count + tr), 1: 10]
+      train_y <- dataset_svm[(count + ahead): (count + tr + ahead), 11]
       train_set <- cbind(train_x, train_y)
       
-      test_x <- dataset_svm[(count + 276 + 1), 1: 10]
-      test_y <- dataset_svm[(count + 276 + 3 + 1), 11]
+      test_x <- dataset_svm[(count + tr + 1), 1: 10]
+      test_y <- dataset_svm[(count + tr + ahead + 1), 11]
       
       svm.model <- svm(train_y~., data = train_set, cost=cost[i], gamma=gamma[j])
       svm.pred <- predict(svm.model, test_x)
@@ -188,23 +190,102 @@ for (i in c(1: 6)){
           error2 = error2 + 1
         }
       }
+      square = square + (svm.pred - test_y)*(svm.pred - test_y)
       count = count + 5
       
     }
     acc[j,i] = unlist(accuracy)
     err1[j, i] = unlist(error1)
     err2[j, i] = unlist(error2)
+    square_error[j, i] = unlist(square)
   }
 }
 
 colors <- c("dodgerblue","firebrick","forestgreen","gold","black","brown")
-plot(1:6,rep(0,6),ylim=c(min(svm_result2)*0.9, max(svm_result2)*1.1),type="n",xlab = "ahead of time", main = "Overall Error")
-sapply(1:6,function(x)points(1:6,svm_result2[x,],type="b",col=colors[x]))
+plot(1:6,rep(0,6),ylim=c(min(acc3)*0.9, max(acc3)*1.1),type="n",xlab = "cost", main = "Overall Error")
+sapply(1:6,function(x)points(1:6,acc3[x,],type="b",col=colors[x]))
 legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
 
-plot(1:6,rep(0,7),ylim=c(min(svm_error1_1)*0.9, max(svm_error1_1)*1.1),type="n",xlab = "ahead of time", main="Predicted > CutOff & Observed < Cutoff")
-sapply(1:6,function(x)points(1:6,svm_error1_1[x,],type="b",col=colors[x]))
-legend("topright",c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),col=colors,bty="n",pch=1,lty = 1)
+plot(1:6,rep(0,6),ylim=c(min(err1_3)*0.9, max(err1_3)*1.1),type="n",xlab = "cost", main = "Too high error")
+sapply(1:6,function(x)points(1:6,err1_3[x,],type="b",col=colors[x]))
+legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
 
-#change the partition method for the data----------------------------------------------------------
+plot(1:6,rep(0,6),ylim=c(min(square_error3)*0.9, max(square_error3)*1.1),type="n",xlab = "cost", main = "Square Error")
+sapply(1:6,function(x)points(1:6,square_error3[x,],type="b",col=colors[x]))
+legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
 
+#when gamma = 0.1, cost = 100, we have the lowest error
+
+
+#save all the results in acc3, err1_3, err2_3, square_error3
+
+#narrow the range for the parameters cost and gamma---------------------------------------------
+
+cost = seq(from = 10, to = 100, by = 10)
+gamma = seq(from = 0.1, to = 1, by = 0.1)
+
+acc = matrix(NA,nrow=length(cost),ncol = length(gamma))
+err1 = matrix(NA,nrow=length(cost),ncol = length(gamma))
+err2 = matrix(NA,nrow=length(cost),ncol = length(gamma))
+square_error = matrix(NA,nrow=length(cost),ncol = length(gamma))
+
+tr = 312
+ahead = 3
+
+cutoff <- 68.1
+
+for (i in c(1: 10)){
+  for (j in c(1: 10)){
+    count = 1
+    accuracy = 0
+    error1 = 0
+    error2 = 0
+    square = 0
+    
+    while(count < 20000){
+      train_x <- dataset_svm[count: (count + tr), 1: 10]
+      train_y <- dataset_svm[(count + ahead): (count + tr + ahead), 11]
+      train_set <- cbind(train_x, train_y)
+      
+      test_x <- dataset_svm[(count + tr + 1), 1: 10]
+      test_y <- dataset_svm[(count + tr + ahead + 1), 11]
+      
+      svm.model <- svm(train_y~., data = train_set, cost=cost[i], gamma=gamma[j])
+      svm.pred <- predict(svm.model, test_x)
+      if ((svm.pred > cutoff & test_y > cutoff)|| (svm.pred < cutoff & test_y <= cutoff)){
+        accuracy = accuracy
+      }
+      else{
+        accuracy = accuracy + 1
+        if (svm.pred > cutoff & test_y < cutoff){
+          error1 = error1 + 1
+        }
+        else{
+          error2 = error2 + 1
+        }
+      }
+      square = square + (svm.pred - test_y)*(svm.pred - test_y)
+      count = count + 5
+      
+    }
+    acc[j,i] = unlist(accuracy)
+    err1[j, i] = unlist(error1)
+    err2[j, i] = unlist(error2)
+    square_error[j, i] = unlist(square)
+  }
+}
+
+colors <- c("dodgerblue","firebrick","forestgreen","gold","black","brown")
+plot(1:10,rep(0,10),ylim=c(min(acc4)*0.9, max(acc4)*1.1),type="n",xlab = "cost", main = "Overall Error")
+sapply(1:10,function(x)points(1:10,acc4[x,],type="b",col=colors[x]))
+legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
+
+plot(1:10,rep(0,10),ylim=c(min(err1_4)*0.9, max(err1_4)*1.1),type="n",xlab = "cost", main = "Too high error")
+sapply(1:10,function(x)points(1:10,err1_4[x,],type="b",col=colors[x]))
+legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
+
+plot(1:10,rep(0,10),ylim=c(min(square_error4)*0.9, max(square_error4)*1.1),type="n",xlab = "cost", main = "Square Error")
+sapply(1:10,function(x)points(1:10,square_error4[x,],type="b",col=colors[x]))
+legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
+
+#save all the results in acc4, err1_4, err2_4, square_error4
