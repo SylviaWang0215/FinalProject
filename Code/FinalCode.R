@@ -60,18 +60,49 @@ for (i in c(1: 8)){
   }
 }
 
+par(mar = c(5.1, 4.1, 3.1, 5.75), xpd = TRUE)
+
 colors <- c("#A7A7A7","dodgerblue","firebrick","forestgreen","gold","black","brown",6,4)
-plot(1:8,rep(0,8),ylim=c(min(acc1)*0.9, max(acc1)*1.1),type="n",xlab = "ahead of time", main = "Overall 0-1 Error")
+ahead_time_label = c("15min", "30min", "1hr", "2hr", "4hr", "8hr", "16hr", "24hr")
+plot(1:8,rep(0,8),ylim=c(min(acc1)*0.9, max(acc1)*1.1),type="n",
+     xlab = "Time in Advance", 
+     ylab = "Error Rate(%)", 
+     xaxt = "n",
+     main = "Overall Misclassification Rate")
+axis(1,at=1:8,ahead_time_label)
 sapply(1:9,function(x)points(1:8,acc1[x,],type="b",col=colors[x]))
-legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=colors,bty="n",pch=1,lty = 1)
+legend(title="Training Size",
+       "bottomright",
+       c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),
+       col=colors,bty="n",pch=1,lty = 1,cex=0.8, inset=c(-0.25,0))
 
-plot(1:8,rep(0,8),ylim=c(min(err1_1)*0.9, max(err1_1)*1.1),type="n",xlab = "ahead of time", main="Predicted > CutOff & Observed < Cutoff")
+par(mar = c(5.1, 4.1, 3.1, 5), xpd = TRUE)
+plot(1:8,rep(0,8),ylim=c(min(err1_1)*0.9, max(err1_1)*1.1),type="n",
+     xlab = "Time in Advance",
+     ylab = "Error Rate(%)",
+     xaxt = "n",
+     main="Missed Detection Rate")
+ahead_time_label = c("15min", "30min", "1hr", "2hr", "4hr", "8hr", "16hr", "24hr")
+axis(1,at=1:8,ahead_time_label)
 sapply(1:9,function(x)points(1:8,err1_1[x,],type="b",col=colors[x]))
-legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=colors,bty="n",pch=1,lty = 1)
+legend(title="Training Size",
+       "bottomright",
+       c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.25,0))
 
-plot(1:8,rep(0,8),ylim=c(min(square_error1)*0.9, max(square_error1)*1.1),type="n",xlab = "ahead of time", main="Overall Square Loss")
+
+plot(1:8,rep(0,8),ylim=c(min(square_error1)*0.9, max(square_error1)*1.1),type="n",
+     xlab = "Time in Advance",
+     ylab = "Error Rate(%)",
+     xaxt = "n",
+     main="")
+ahead_time_label = c("15min", "30min", "1hr", "2hr", "4hr", "8hr", "16hr", "24hr")
+axis(1,at=1:8,ahead_time_label)
 sapply(1:9,function(x)points(1:8,square_error1[x,],type="b",col=colors[x]))
-legend("topright",c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),col=colors,bty="n",pch=1,lty = 1)
+legend(title="Training Size",
+       "bottomright",
+       c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.25,0))
 #save all the results in acc1, err1_1, err2_1, square_error1
 
 
@@ -132,19 +163,42 @@ for (i in c(1: 7)){
   }
 }
 
-colors <- c("#A7A7A7","dodgerblue","firebrick","forestgreen","gold","black","brown", 6, 4, 3)
-plot(1:7,rep(0,7),ylim=c(min(acc2)*0.9, max(acc2)*1.1),type="n",xlab = "ahead of time", main = "Overall 0-1 Error")
-sapply(1:10,function(x)points(1:7,acc2[x,],type="b",col=colors[x]))
-legend("topright",c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),col=colors,bty="n",pch=1,lty = 1)
 
-plot(1:7,rep(0,7),ylim=c(min(err1_2)*0.9, max(err1_2)*1.1),type="n",xlab = "ahead of time", main="Predicted > CutOff & Observed < Cutoff 0-1 Error")
-sapply(1:10,function(x)points(1:7,err1_2[x,],type="b",col=colors[x]))
-legend("topright",c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),col=colors,bty="n",pch=1,lty = 1)
+
 
 plot(1:7,rep(0,7),ylim=c(min(square_error2)*0.9, max(square_error2)*1.1),type="n",xlab = "ahead of time", main="Square error")
 sapply(1:10,function(x)points(1:7,square_error2[x,],type="b",col=colors[x]))
 legend("topright",c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),col=colors,bty="n",pch=1,lty = 1)
 
+
+
+colors <- c("#A7A7A7","dodgerblue","firebrick","forestgreen","gold","black","brown", 6, 4, 3)
+plot(1:7,rep(0,7),ylim=c(min(acc2)*0.9, max(acc2)*1.1),type="n",
+     xlab = "Time in Advance",
+     ylab = "Error Rate(%)",
+     xaxt = "n",
+     main="Overall Misclassification Rate")
+ahead_time_label = c("15min", "20min", "25min", "30min", "35min", "40min", "45min")
+axis(1,at=1:7,ahead_time_label)
+sapply(1:10,function(x)points(1:7,acc2[x,],type="b",col=colors[x]))
+legend(title="Training Size",
+       "bottomright",
+       c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.35,0))
+
+
+plot(1:7,rep(0,7),ylim=c(min(err1_2)*0.9, max(err1_2)*1.1),type="n",
+     xlab = "Time in Advance",
+     ylab = "Error Rate(%)",
+     xaxt = "n",
+     main="Missed Detection Rate")
+ahead_time_label = c("15min", "20min", "25min", "30min", "35min", "40min", "45min")
+axis(1,at=1:7,ahead_time_label)
+sapply(1:10,function(x)points(1:7, err1_2[x,],type="b",col=colors[x]))
+legend(title="Training Size",
+       "bottomright",
+       c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.35,0))
 
 #save all the results in acc2, err1_2, err2_2, square_error2
 
@@ -201,7 +255,7 @@ for (i in c(1: 6)){
   }
 }
 
-colors <- c("dodgerblue","firebrick","forestgreen","gold","black","brown")
+
 plot(1:6,rep(0,6),ylim=c(min(acc3)*0.9, max(acc3)*1.1),type="n",xlab = "cost", main = "Overall Error")
 sapply(1:6,function(x)points(1:6,acc3[x,],type="b",col=colors[x]))
 legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
@@ -215,7 +269,33 @@ sapply(1:6,function(x)points(1:6,square_error3[x,],type="b",col=colors[x]))
 legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
 
 #when gamma = 0.1, cost = 100, we have the lowest error
+colors <- c("dodgerblue","firebrick","forestgreen","gold","black","brown")
+plot(1:6,rep(0,6),ylim=c(min(acc3)*0.9, max(acc3)*1.1),type="n",
+     xlab = "Cost",
+     ylab = "Error Rate(%)",
+     xaxt = "n",
+     main="Overall Misclassification Rate")
+Cost = c("0.001", "0.01","0.1","1","10","100")
+axis(1,at=1:6,Cost)
+sapply(1:6,function(x)points(1:6,acc3[x,],type="b",col=colors[x]))
+legend(title="Gamma",
+       "bottomright",
+       c("0.001", "0.01","0.1","1","10","100"),
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.35,0))
 
+
+plot(1:6,rep(0,6),ylim=c(min(err1_3)*0.9, max(err1_3)*1.1),type="n",
+     xlab = "Cost",
+     ylab = "Error Rate(%)",
+     xaxt = "n",
+     main="Missed Detection Rate")
+Cost = c("0.001", "0.01","0.1","1","10","100")
+axis(1,at=1:6,Cost)
+sapply(1:6,function(x)points(1:6, err1_3[x,],type="b",col=colors[x]))
+legend(title="Gamma",
+       "bottomright",
+       c("0.001", "0.01","0.1","1","10","100"),
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.35,0))
 
 #save all the results in acc3, err1_3, err2_3, square_error3
 
@@ -275,17 +355,93 @@ for (i in c(1: 10)){
   }
 }
 
-colors <- c("dodgerblue","firebrick","forestgreen","gold","black","brown")
-plot(1:10,rep(0,10),ylim=c(min(acc4)*0.9, max(acc4)*1.1),type="n",xlab = "cost", main = "Overall Error")
-sapply(1:10,function(x)points(1:10,acc4[x,],type="b",col=colors[x]))
-legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
 
-plot(1:10,rep(0,10),ylim=c(min(err1_4)*0.9, max(err1_4)*1.1),type="n",xlab = "cost", main = "Too high error")
-sapply(1:10,function(x)points(1:10,err1_4[x,],type="b",col=colors[x]))
-legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
 
-plot(1:10,rep(0,10),ylim=c(min(square_error4)*0.9, max(square_error4)*1.1),type="n",xlab = "cost", main = "Square Error")
+plot(1:10,rep(0,10),ylim=c(min(square_error4)*0.9, max(square_error4)*1.1),type="n",xlab = "cost", main = "Square Loss")
 sapply(1:10,function(x)points(1:10,square_error4[x,],type="b",col=colors[x]))
-legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
+legend("topright",c("0.1", "0.2","0.3","0.4","0.5","0.6", "0.7", "0.8", "0.9", "1.0"),col=colors,bty="n",pch=1,lty = 1)
+
+
+colors <- c("#A7A7A7","dodgerblue","firebrick","forestgreen","gold","black","brown",6,4, 3)
+plot(1:10,rep(0,10),ylim=c(min(acc4)*0.9, max(acc4)*1.1),type="n",
+     xlab = "Cost",
+     ylab = "Error Rate(%)",
+     xaxt = "n",
+     main="Overall Misclassification Rate")
+Cost = c("10", "20", "30", "40", "50", "60", "70", "80", "90", "100")
+axis(1,at=1:10,Cost)
+sapply(1:10,function(x)points(1:10,acc4[x,],type="b",col=colors[x]))
+legend(title="Gamma",
+       "bottomright",
+       c("0.1", "0.2","0.3","0.4","0.5","0.6", "0.7", "0.8", "0.9", "1.0"), 
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.35,0))
+
+
+plot(1:10,rep(0,10),ylim=c(min(err1_4)*0.9, max(err1_4)*1.1),type="n",
+     xlab = "Cost",
+     ylab = "Error Rate(%)",
+     xaxt = "n",
+     main="Missed Detection Rate")
+Cost = c("10", "20", "30", "40", "50", "60", "70", "80", "90", "100")
+axis(1,at=1:10,Cost)
+sapply(1:10,function(x)points(1:10, err1_4[x,],type="b",col=colors[x]))
+legend(title="Gamma",
+       "bottomright",
+       c("0.1", "0.2","0.3","0.4","0.5","0.6", "0.7", "0.8", "0.9", "1.0"), 
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.35,0))
 
 #save all the results in acc4, err1_4, err2_4, square_error4
+
+#model improvement-------------------------------------------------------------------------------
+idx <- as.numeric(row.names(dataset_svm))%%288
+data_imp <- dataset_svm[idx<=216 & idx >= 73,]
+
+tr = 312
+ahead = 3
+
+count = 1
+accuracy = 0
+error1 = 0
+error2 = 0
+square = 0
+
+while(count < 10000){
+  train_x <- data_imp[count: (count + tr), 1: 10]
+  train_y <- data_imp[(count + ahead): (count + tr + ahead), 11]
+  train_set <- cbind(train_x, train_y)
+  
+  test_x <- data_imp[(count + tr + 1), 1: 10]
+  test_y <- data_imp[(count + tr + ahead + 1), 11]
+  
+  svm.model <- svm(train_y~., data = train_set, cost=10, gamma=0.5)
+  svm.pred <- predict(svm.model, test_x)
+  if ((svm.pred > cutoff & test_y > cutoff)|| (svm.pred < cutoff & test_y <= cutoff)){
+    accuracy = accuracy
+  }
+  else{
+    accuracy = accuracy + 1
+    if (svm.pred > cutoff & test_y < cutoff){
+      error1 = error1 + 1
+    }
+    else{
+      error2 = error2 + 1
+    }
+  }
+  square = square + (svm.pred - test_y)*(svm.pred - test_y)
+  count = count + 5
+  
+}
+
+
+plot(1:10,rep(0,10),ylim=c(min(err1_4)*0.9, max(err1_4)*1.1),type="n",
+     xlab = "Cost",
+     ylab = "Error Rate(%)",
+     xaxt = "n",
+     main="Missed Detection Rate")
+Cost = c("10", "20", "30", "40", "50", "60", "70", "80", "90", "100")
+axis(1,at=1:10,Cost)
+sapply(1:10,function(x)points(1:10, err1_4[x,],type="b",col=colors[x]))
+legend(title="Gamma",
+       "bottomright",
+       c("0.1", "0.2","0.3","0.4","0.5","0.6", "0.7", "0.8", "0.9", "1.0"), 
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.35,0))
