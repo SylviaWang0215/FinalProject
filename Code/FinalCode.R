@@ -90,19 +90,19 @@ legend(title="Training Size",
        c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),
        col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.25,0))
 
-
-plot(1:8,rep(0,8),ylim=c(min(square_error1)*0.9, max(square_error1)*1.1),type="n",
+par(mar = c(5.1, 4.1, 3.1, 5), xpd = TRUE)
+plot(1:8,rep(0,8),ylim=c(min(mean_square_error1)*0.9, max(mean_square_error1)*1.1),type="n",
      xlab = "Time in Advance",
-     ylab = "Error Rate(%)",
+     ylab = "Mean Square Error",
      xaxt = "n",
-     main="")
+     main = "Overall Square Error")
 ahead_time_label = c("15min", "30min", "1hr", "2hr", "4hr", "8hr", "16hr", "24hr")
 axis(1,at=1:8,ahead_time_label)
-sapply(1:9,function(x)points(1:8,square_error1[x,],type="b",col=colors[x]))
+sapply(1:9,function(x)points(1:8,mean_square_error1[x,],type="b",col=colors[x]))
 legend(title="Training Size",
        "bottomright",
        c("24hr","36hr","48hr","60hr","72hr","84hr","96hr","108hr","120hr"),
-       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.25,0))
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.5,0))
 #save all the results in acc1, err1_1, err2_1, square_error1
 
 
@@ -200,6 +200,20 @@ legend(title="Training Size",
        c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),
        col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.35,0))
 
+
+plot(1:7,rep(0,7),ylim=c(min(mean_square_error2)*0.9, max(mean_square_error2)*1.1),type="n",
+     xlab = "Time in Advance",
+     ylab = "Mean Square Error",
+     xaxt = "n",
+     main="Overall Square Error")
+ahead_time_label = c("15min", "20min", "25min", "30min", "35min", "40min", "45min")
+axis(1,at=1:7,ahead_time_label)
+sapply(1:10,function(x)points(1:7, mean_square_error2[x,],type="b",col=colors[x]))
+legend(title="Training Size",
+       "bottomright",
+       c("22hr", "23hr","24hr","25hr","26hr","34hr","35hr","36hr","37hr","38hr"),
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.5,0))
+
 #save all the results in acc2, err1_2, err2_2, square_error2
 
 #calculate the C and gamma for ahead of time = 15min and training dataset size = 26hr-------------------
@@ -264,7 +278,7 @@ plot(1:6,rep(0,6),ylim=c(min(err1_3)*0.9, max(err1_3)*1.1),type="n",xlab = "cost
 sapply(1:6,function(x)points(1:6,err1_3[x,],type="b",col=colors[x]))
 legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
 
-plot(1:6,rep(0,6),ylim=c(min(square_error3)*0.9, max(square_error3)*1.1),type="n",xlab = "cost", main = "Square Error")
+plot(1:6,rep(0,6),ylim=c(min(mean_square_error3)*0.9, max(mean_square_error3)*1.1),type="n",xlab = "cost", main = "Square Error")
 sapply(1:6,function(x)points(1:6,square_error3[x,],type="b",col=colors[x]))
 legend("topright",c("0.001", "0.01","0.1","1","10","100"),col=colors,bty="n",pch=1,lty = 1)
 
@@ -296,6 +310,20 @@ legend(title="Gamma",
        "bottomright",
        c("0.001", "0.01","0.1","1","10","100"),
        col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.35,0))
+
+
+plot(1:6,rep(0,6),ylim=c(min(mean_square_error3)*0.9, max(mean_square_error3)*1.1),type="n",
+     xlab = "Cost",
+     ylab = "Mean Square Error",
+     xaxt = "n",
+     main="Overall Square Error")
+Cost = c("0.001", "0.01","0.1","1","10","100")
+axis(1,at=1:6,Cost)
+sapply(1:6,function(x)points(1:6, mean_square_error3[x,],type="b",col=colors[x]))
+legend(title="Gamma",
+       "bottomright",
+       c("0.001", "0.01","0.1","1","10","100"),
+       col=colors,bty="n",pch=1,lty = 1, cex=0.8, inset=c(-0.4,0))
 
 #save all the results in acc3, err1_3, err2_3, square_error3
 
